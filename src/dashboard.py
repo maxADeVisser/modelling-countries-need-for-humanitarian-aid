@@ -1,3 +1,12 @@
+"""
+To run dashboard lcoally, install streamlit:
+pip install streamlit
+
+Then run dashboard.py from commandline like this:
+streamlit run dashboard.py
+
+"""
+
 import streamlit as st
 import pandas as pd
 import os

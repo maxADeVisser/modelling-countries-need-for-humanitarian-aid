@@ -63,24 +63,24 @@ if __name__ == "__main__":
     
     #left, right  = st.columns(2)
     
-    country_selection = st.sidebar.multiselect("Select a country(s)", countries, 
-                                               default=countries[:3])
     feature_selection = st.sidebar.radio("Select a feature", features)
+    country_selection = st.sidebar.multiselect("Select a country(s)", countries, 
+                                               default=countries[:])
     
     if country_selection:
         country_s = ""
         for country in country_selection:
             country_s += f"{country}, "
             
-        selection_df = df.loc[country_selection]
+        selection_df = df.loc[country_selection].sort_values(feature_selection)
         
-        st.write(f"Selected countries: {country_s}")
-        #right.dataframe(selection_df) # TODO style this dataframe with correct formating and units
+        with st.expander(f"Countries selected for exploration:"):
+            st.write(country_s)
 
         
         fig = px.bar(selection_df, x=selection_df.index, y=feature_selection)
         st.plotly_chart(figure_or_data=fig, 
                           theme="streamlit")
         
-        st.write("Here is the dataframe (sorted by child_mort):")
-        st.dataframe(selection_df.sort_values("child_mort"))
+        st.write(f"Here is the dataframe used (sorted by {feature_selection}):")
+        st.dataframe(selection_df.sort_values(feature_selection)) # TODO style this dataframe with correct formating and units

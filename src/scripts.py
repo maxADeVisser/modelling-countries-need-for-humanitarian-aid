@@ -93,3 +93,10 @@ def evaluate_clusters_plot(df: pd.DataFrame, startrange = 2, stoprange = 25, clu
     ax3.plot(list(resultsc.keys()), list(resultsc.values()), marker='o')
     ax3.set_title('Calinski Harabasz Score', fontsize=15)
 
+def pre_process_data(data: pd.DataFrame):
+    """Make into a function that can be imported and perform all pre-processing steps"""
+    # TODO make this
+    
+    # scaling
+    
+    pass

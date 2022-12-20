@@ -5,7 +5,7 @@ import geopandas
 import folium
 from datetime import datetime
 import scipy.cluster.hierarchy as sch
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -178,3 +178,63 @@ def apply_hierarchical_clustering(data: pd.DataFrame, cluster_num: int = 5):
     data["cluster"] = y_hc
 
     return data
+
+def wcss(cluster: pd.DataFrame) -> float:
+    """Calculate the Within-Cluster-Sum-of-Squares (WCSS) for a given cluster"""
+    cluster = cluster.values.tolist()
+    
+    # Calculate the centroid of the cluster
+    centroid = np.mean(cluster, axis=0)
+
+    # Initialize the WCSS to 0
+    wcss = 0
+
+    # Iterate over each data point in the cluster
+    for point in cluster:
+        # Calculate the squared distance between the data point and the centroid
+        squared_distance = np.sum((point - centroid)**2)
+        # Add the squared distance to the WCSS
+        wcss += squared_distance
+
+    # WCSS is the sum of the squared distances for all the data points in the cluster
+    return wcss
+
+
+def gap_statistic(df: pd.DataFrame, n_clusters: int) -> float:
+  """Iteratively calculate and plot the gap statistic for a given dataset and number of clusters provided.
+    Pandas dataframe provided most only contain numerical values."""
+  
+  df = np.array(df.values.tolist()) # Convert the dataframe to a numpy array
+  gaps = []
+  ks = np.arange(2, n_clusters)
+  
+  for k in ks:
+    # Use KMeans to cluster the data into n_clusters clusters
+    kmeans = KMeans(n_clusters=k)
+    kmeans.fit(df)
+
+    # Calculate the WCSS of the clusters
+    wcss = kmeans.inertia_
+
+    # Generate a reference distribution of the data by randomly assigning the data points to clusters
+    reference_distribution = np.random.randint(low=0, high=k-1, size=df.shape[0])
+
+    # Calculate the WCSS for the reference distribution
+    reference_wcss = 0
+    for i in range(k):
+      cluster = df[reference_distribution == i]
+      centroid = np.mean(cluster, axis=0)
+      for point in cluster:
+        squared_distance = np.sum((point - centroid)**2)
+        reference_wcss += squared_distance
+
+    # Calculate the gap statistic as the difference between the WCSS of the clusters and the WCSS of the reference distribution, normalized by the WCSS of the reference distribution
+    gap = (wcss - reference_wcss) / reference_wcss
+    gaps.append(gap)
+  
+  plt.plot(ks, gaps)
+  plt.grid()
+  plt.ylabel("Gap Statistic")
+  plt.xlabel("Number of Clusters, k")
+  
+  return gaps

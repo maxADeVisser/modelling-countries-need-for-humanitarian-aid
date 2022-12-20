@@ -73,12 +73,12 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
 
 def display_clusters(df):
     """Display the clusters in a pivot table.
-    
+
     Parameters
     ----------
     df : pd.DataFrame
         The dataframe with the clusters
-    
+
     Returns
     -------
     Pivot table
@@ -245,7 +245,7 @@ def wcss(cluster: pd.DataFrame) -> float:
     return wcss
 
 
-def gap_statistic(df: pd.DataFrame, n_clusters: int) -> float:
+def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> float:
     """Iteratively calculate and plot the gap statistic for a given dataset and number of clusters provided.
       Pandas dataframe provided most only contain numerical values."""
 
@@ -281,9 +281,10 @@ def gap_statistic(df: pd.DataFrame, n_clusters: int) -> float:
         gap = (wcss - reference_wcss) / reference_wcss
         gaps.append(gap)
 
-    plt.plot(ks, gaps)
-    plt.grid()
-    plt.ylabel("Gap Statistic")
-    plt.xlabel("Number of Clusters, k")
+    if plot_gap:
+        plt.plot(ks, gaps)
+        plt.grid()
+        plt.ylabel("Gap Statistic")
+        plt.xlabel("Number of Clusters, k")
 
     return gaps

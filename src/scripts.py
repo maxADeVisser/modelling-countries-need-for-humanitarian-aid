@@ -79,7 +79,7 @@ def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, 
     pca : bool, optional
         Whether or not to perform PCA, by default False
     pca_components : int, optional
-        The number of components to use for PCA, by default len(data.columns)
+        The number of components to use for PCA, by default max number of components
     plot_scree_plot : bool, optional
         Whether or not to plot the scree plot, by default False
     """

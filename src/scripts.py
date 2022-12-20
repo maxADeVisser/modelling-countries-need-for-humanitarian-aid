@@ -137,4 +137,4 @@ def create_map_plot(data: pd.DataFrame, output_dir: str):
         line_opacity=0.2,
         legend_name='Cluster ids'
     ).add_to(urban_area_map)
-    urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d")}.html')
+    urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')

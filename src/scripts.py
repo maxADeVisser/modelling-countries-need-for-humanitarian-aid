@@ -4,6 +4,9 @@ import geopandas
 import folium
 from datetime import datetime
 from sklearn.cluster import KMeans
+import io
+from PIL import Image
+import branca.colormap as cm
 
 def dist(p1: list, p2: list):
     """Calculates the Euclidean distance between two points in n-dimensional space"""
@@ -125,16 +128,26 @@ def create_map_plot(data: pd.DataFrame, output_dir: str):
     )
 
     urban_area_map = folium.Map()
-    folium.Choropleth(
+    choropleth = folium.Choropleth(
         geo_data=country_geopandas,
         name='choropleth',
         data=country_geopandas,
         columns=['name', 'cluster'],
         key_on='feature.properties.name',
-        fill_color='YlOrRd',
+        fill_color='Set1',
         nan_fill_color='Grey',
         fill_opacity=0.7,
         line_opacity=0.2,
         legend_name='Cluster ids'
     ).add_to(urban_area_map)
+    for key in choropleth._children:
+        if key.startswith('color_map'):
+            del(choropleth._children[key])
+            
+    choropleth.add_to(urban_area_map)
+
     urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
+
+    #img_data = urban_area_map._to_png(5)
+    #img = Image.open(io.BytesIO(img_data))
+    #img.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.png')

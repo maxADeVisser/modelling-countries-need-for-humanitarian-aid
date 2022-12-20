@@ -59,13 +59,6 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     return s, c, d
 
 
-# def WCSS(cluster: list):
-#     """Calculate the Within-Cluster-Sum of Squared-Errors (WSS)
-#     WCSS is the sum of squares of the distances of each data 
-#     point in all clusters to their respective centroids"""
-    
-    #return cluster_centroid_distances # np.sum(intra_variances)
-
 def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, pca_components: int = 9, plot_scree_plot: bool = False):
     """Make into a function that can be imported and perform all pre-processing steps
     on the data. This includes scaling, PCA, etc.

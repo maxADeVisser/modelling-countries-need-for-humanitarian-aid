@@ -69,6 +69,7 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
 def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, pca_components: int = 9, plot_scree_plot: bool = False):
     """Make into a function that can be imported and perform all pre-processing steps
     on the data. This includes scaling, PCA, etc.
+
     
     Parameters
     ----------
@@ -82,7 +83,15 @@ def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, 
         The number of components to use for PCA, by default max number of components
     plot_scree_plot : bool, optional
         Whether or not to plot the scree plot, by default False
+    
+    Returns
+    -------
+    countries : pd.Series
+        The countries of the data
+    data : pd.DataFrame
+        The pre-processed data
     """
+    countries = data.pop('country')
     if scaler == 'standard':
         scaler = StandardScaler()
     elif scaler == 'minmax':
@@ -106,7 +115,7 @@ def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, 
         plt.xlabel('Principal Component aggregated variance')
         plt.title(f'PCA Scree Plot using {str(scaler)[:-2]}')
         plt.show()
-    return data
+    return countries, data
 
 
 

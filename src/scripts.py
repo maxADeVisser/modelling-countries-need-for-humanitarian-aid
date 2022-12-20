@@ -1,102 +1,171 @@
 import pandas as pd
 import numpy as np
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+import geopandas
+import folium
+from datetime import datetime
+import scipy.cluster.hierarchy as sch
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
 
 def dist(p1: list, p2: list):
-    """Calculates the Euclidean distance between two points in n-dimensional space"""
+    """Calculates the Euclidean distance between 
+    two points in n-dimensional space"""
     return np.sqrt(np.sum([(p1[i] - p2[i])**2 for i in range(len(p1))]))
+
 
 def calculate_centroid(cluster_df: pd.DataFrame) -> list:
     """Return the centroid of a cluster as a list"""
     return cluster_df.describe().loc['mean']
 
-def intra_cluster_variance(cluster: pd.DataFrame) -> float:
-    """Calculate the Intra-Cluster-Variance (ICV) of a cluster
-    ICV is the sum of squares of the distances of each data
-    point in a cluster to its centroid"""
-    centroid = calculate_centroid(cluster)
-    [dist(instance, centroid) for instance in cluster.values.tolist()]
-    return np.sum()
-def split_in_clusters(cluster_df: pd.DataFrame) -> list:
-    cluster_list = [] # a list to hold each cluster as a DataFrame
-    for i in range(len(cluster_df.cluster.unique())):
-        cluster_list.append(cluster_df.loc[cluster_df['cluster'] == i])
-    return cluster_list
 
-def intra_cluster_variance(cluster_df: pd.DataFrame) -> float:  
-    cluster_list = split_in_clusters(cluster_df)
+def ICV(cluster: pd.DataFrame) -> float:  
+    """Calculate the Intra-Cluster-Variance (ICV) of the provided cluster.
+    This is calculated as the mean of the distances of each data point in a cluster,
+    to every other data point in the same cluster."""
     
-    # calculate centroid in each cluster
-    cluster_centroids = [calculate_centroid(cluster) for cluster in cluster_list]
+    average_distances = []
     
-    # calculate intra variance in each cluster and store in list
-    cluster_intra_variance = []
-    for (cluster, centroid) in zip(cluster_list, cluster_centroids):
-        cluster_intra_variance.append(sum([dist(instance, centroid) for instance in cluster.values.tolist()]))
-    
-    return cluster_list, cluster_intra_variance
-    # A 2D list of distances between each instance and its centroid in each cluster
-    #cluster_centroid_distances = [[dist(instance, centroid) for instance in cluster.values.tolist()] for cluster in cluster_list]
+    for sample in cluster.values.tolist():
+        current = sample
+        
+        distances_from_current = []
+        for point in cluster.values.tolist():
+            if current != point:
+                distances_from_current.append(dist(current, point))
+        average_distances.append(np.mean(distances_from_current))
+
+    return average_distances
+
+
+def split_in_clusters(cluster_df: pd.DataFrame) -> list:
+    """Returns a dict with the clusters as values and the cluster number as key"""
+    result = {} 
+    for i in range(len(cluster_df.cluster.unique())):
+        result[i] = cluster_df.loc[cluster_df['cluster'] == i]\
+            .drop(columns = ['cluster'], axis=1)
+    return result
+
+
+def evalutate_clusters(clustered_df: pd.DataFrame):
+    """Calculate the silhouette score, Calinski-Harabasz Index, Davies-Bouldin Index of a clustered dataframe (in that order).
+    The dataframe needs to have a 'cluster' column, and the rest of the columns are the features."""
+    s = silhouette_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
+    c = calinski_harabasz_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
+    d = davies_bouldin_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
+    return s, c, d
+
+
+# def WCSS(cluster: list):
+#     """Calculate the Within-Cluster-Sum of Squared-Errors (WSS)
+#     WCSS is the sum of squares of the distances of each data 
+#     point in all clusters to their respective centroids"""
     
     #return cluster_centroid_distances # np.sum(intra_variances)
 
-def WCSS(cluster: list):
-    """Calculate the Within-Cluster-Sum of Squared-Errors (WSS)
-    WCSS is the sum of squares of the distances of each data 
-    point in all clusters to their respective centroids"""
+def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, pca_components: int = 9, plot_scree_plot: bool = False):
+    """Make into a function that can be imported and perform all pre-processing steps
+    on the data. This includes scaling, PCA, etc.
+
     
-    n_k = len(cluster)
-
-def evaluate_clusters_plot(df: pd.DataFrame, startrange = 2, stoprange = 25, cluster_method = KMeans()) -> None:
-    '''
-    Evaluate clusters using the Davies Bouldin Score, Silhouette Score and Calinski Harabasz Score.
-    Plot the results for each metric.
-
     Parameters
     ----------
-    df : pd.DataFrame
-        Dataframe to be used for clustering evaluation
-    startrange : int, optional
-        Starting number of clusters. The default is 2.
-    stoprange : int, optional
-        Stopping number of clusters. The default is 25.
-    cluster_method : sklearn.cluster, optional
-        Clustering method to be used. The default is KMeans.
-        Another example: cluster_method = AgglomerativeClustering.
-
+    data : pd.DataFrame
+        The data to be pre-processed
+    scaler : str, optional
+        The scaler to be used, by default 'standard'
+    pca : bool, optional
+        Whether or not to perform PCA, by default False
+    pca_components : int, optional
+        The number of components to use for PCA, by default max number of components
+    plot_scree_plot : bool, optional
+        Whether or not to plot the scree plot, by default False
+    
     Returns
     -------
-    None.
-    '''
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(16,6))
-    resultsa = {}
-    resultsb = {}
-    resultsc = {}
-    
-    for i in range(startrange, stoprange):
-        cluster = cluster_method
-        cluster = cluster(n_clusters=i)
-        labels = cluster.fit_predict(df)
-        labels = cluster.labels_
-        
-        db_index = davies_bouldin_score(df, labels)
-        resultsa.update({i: db_index})
-        db_index = silhouette_score(df, labels)
-        resultsb.update({i: db_index})
-        db_index = calinski_harabasz_score(df, labels)
-        resultsc.update({i: db_index})
+    countries : pd.Series
+        The countries of the data
+    data : pd.DataFrame
+        The pre-processed data
+    """
+    countries = data.pop('country')
+    if scaler == 'standard':
+        scaler = StandardScaler()
+    elif scaler == 'minmax':
+        scaler = MinMaxScaler()
+    data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
+    if pca:
+        pca = PCA(pca_components)
+        data = pca.fit_transform(data)
+        data = pd.DataFrame(data, columns=[f'PC{i}' for i in range(1, pca_components+1)])
+    if plot_scree_plot and pca:
+        scree = list(pca.explained_variance_ratio_*100) # get variance ratios
+        labels = ['PC' + str(x) for x in range(1, len(scree)+1)] # make labels for scree plot
+        labels = [scree[i] for i in range(len(scree))]
+        for i in range(1, len(scree)):
+            labels[i] = labels[i] + labels[i-1]
+        labels = [round(i, 2) for i in labels]
 
-    fig.suptitle(f'Evaluation Metrics for {str(cluster_method())[:-2]}', fontsize=15)
-    ax1.plot(list(resultsa.keys()), list(resultsa.values()), marker='o')
-    ax1.set_title('Davies Bouldin Score', fontsize=15)
-    ax2.plot(list(resultsb.keys()), list(resultsb.values()), marker='o')
-    ax2.set_title('Silhouette Score', fontsize=15)
-    ax3.plot(list(resultsc.keys()), list(resultsc.values()), marker='o')
-    ax3.set_title('Calinski Harabasz Score', fontsize=15)
+        # plot the percentage of explained variance by principal component
+        plt.bar(x=range(1,len(scree)+1), height=scree, tick_label = labels) 
+        plt.ylabel('Percentage of Explained Variance')
+        plt.xlabel('Principal Component aggregated variance')
+        plt.title(f'PCA Scree Plot using {str(scaler)[:-2]}')
+        plt.show()
+    return countries, data
 
-def pre_process_data(data: pd.DataFrame):
-    """Make into a function that can be imported and perform all pre-processing steps"""
-    # TODO make this
-    
-    # scaling
-    
-    pass
+
+
+def create_map_plot(data: pd.DataFrame, output_dir: str):
+    """
+    data DataFrame needs following columns:
+        cluster: id of cluster for each row
+        name: country
+    """
+
+    country_geopandas = geopandas.read_file(
+        geopandas.datasets.get_path('naturalearth_lowres')
+    )
+    country_geopandas = country_geopandas.merge(
+        data, # this should be the pandas with statistics at country level
+        how='inner', 
+        left_on=['name'], 
+        right_on=['name']
+    )
+
+    urban_area_map = folium.Map()
+    choropleth = folium.Choropleth(
+        geo_data=country_geopandas,
+        name='choropleth',
+        data=country_geopandas,
+        columns=['name', 'cluster'],
+        key_on='feature.properties.name',
+        fill_color='Set1',
+        nan_fill_color='Grey',
+        fill_opacity=0.7,
+        line_opacity=0.2,
+        legend_name='Cluster ids'
+    ).add_to(urban_area_map)
+    for key in choropleth._children:
+        if key.startswith('color_map'):
+            del(choropleth._children[key])
+            
+    choropleth.add_to(urban_area_map)
+
+    urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
+
+
+def create_dendrogram(data: pd.DataFrame):
+    return sch.dendrogram(sch.linkage(data, method = 'ward'))
+
+
+def apply_hierarchical_clustering(data: pd.DataFrame, cluster_num: int = 5):
+    """Appends output of hierarchical clustering to provided data in 'cluster' column"""
+    agg_hc = AgglomerativeClustering(n_clusters=cluster_num, affinity='euclidean', linkage='ward')
+    y_hc = agg_hc.fit_predict(data)
+    data["cluster"] = y_hc
+
+    return data

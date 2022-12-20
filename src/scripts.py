@@ -1,5 +1,9 @@
 import pandas as pd
 import numpy as np
+import geopandas
+import folium
+from datetime import datetime
+from sklearn.cluster import KMeans
 
 def dist(p1: list, p2: list):
     """Calculates the Euclidean distance between two points in n-dimensional space"""
@@ -45,6 +49,7 @@ def WCSS(cluster: list):
     point in all clusters to their respective centroids"""
     
     n_k = len(cluster)
+
 
 def evaluate_clusters_plot(df: pd.DataFrame, startrange = 2, stoprange = 25, cluster_method = KMeans()) -> None:
     '''
@@ -100,3 +105,36 @@ def pre_process_data(data: pd.DataFrame):
     # scaling
     
     pass
+
+
+def create_map_plot(data: pd.DataFrame, output_dir: str):
+    """
+    data DataFrame needs following columns:
+        cluster: id of cluster for each row
+        name: country
+    """
+
+    country_geopandas = geopandas.read_file(
+        geopandas.datasets.get_path('naturalearth_lowres')
+    )
+    country_geopandas = country_geopandas.merge(
+        data, # this should be the pandas with statistics at country level
+        how='inner', 
+        left_on=['name'], 
+        right_on=['name']
+    )
+
+    urban_area_map = folium.Map()
+    folium.Choropleth(
+        geo_data=country_geopandas,
+        name='choropleth',
+        data=country_geopandas,
+        columns=['name', 'cluster'],
+        key_on='feature.properties.name',
+        fill_color='YlOrRd',
+        nan_fill_color='Grey',
+        fill_opacity=0.7,
+        line_opacity=0.2,
+        legend_name='Cluster ids'
+    ).add_to(urban_area_map)
+    urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d")}.html')

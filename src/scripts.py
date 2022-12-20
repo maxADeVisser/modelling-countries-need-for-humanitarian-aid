@@ -4,10 +4,6 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bo
 import geopandas
 import folium
 from datetime import datetime
-from sklearn.cluster import KMeans
-import io
-from PIL import Image
-import branca.colormap as cm
 
 def dist(p1: list, p2: list):
     """Calculates the Euclidean distance between 
@@ -35,6 +31,7 @@ def split_in_clusters(cluster_df: pd.DataFrame) -> list:
     for i in range(len(cluster_df.cluster.unique())):
         result[i] = cluster_df.loc[cluster_df['cluster'] == i]
     return result
+
 
 def evalutate_clusters(clustered_df: pd.DataFrame):
     """Calculate the silhouette score, Calinski-Harabasz Index, Davies-Bouldin Index of a clustered dataframe (in that order).
@@ -99,7 +96,3 @@ def create_map_plot(data: pd.DataFrame, output_dir: str):
     choropleth.add_to(urban_area_map)
 
     urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
-
-    #img_data = urban_area_map._to_png(5)
-    #img = Image.open(io.BytesIO(img_data))
-    #img.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.png')

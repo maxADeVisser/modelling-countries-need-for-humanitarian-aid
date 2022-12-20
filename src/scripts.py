@@ -58,6 +58,9 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     d = davies_bouldin_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
     return s, c, d
 
+def display_clusters(df):
+    """Display the clusters on a map"""
+    return df.groupby(df['cluster']).mean()
 
 def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, pca_components: int = 9, plot_scree_plot: bool = False):
     """Make into a function that can be imported and perform all pre-processing steps

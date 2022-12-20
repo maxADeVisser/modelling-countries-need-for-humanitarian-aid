@@ -17,19 +17,30 @@ def calculate_centroid(cluster_df: pd.DataFrame) -> list:
 
 
 def ICV(cluster: pd.DataFrame) -> float:  
-    """Calculate the Intra-Cluster-Variance (ICV) of the provided cluster."""
+    """Calculate the Intra-Cluster-Variance (ICV) of the provided cluster.
+    This is calculated as the mean of the distances of each data point in a cluster,
+    to every other data point in the same cluster."""
     
-    # calculate n-dimensional centroid for cluster
-    cluster_centroid = calculate_centroid(cluster)
+    average_distances = []
     
-    distances_to_centroid = [dist(instance, cluster_centroid) for instance in cluster.values.tolist()]
-    return np.mean(distances_to_centroid)
+    for sample in cluster.values.tolist():
+        current = sample
+        
+        distances_from_current = []
+        for point in cluster.values.tolist():
+            if current != point:
+                distances_from_current.append(dist(current, point))
+        average_distances.append(np.mean(distances_from_current))
+
+    return average_distances
 
 
 def split_in_clusters(cluster_df: pd.DataFrame) -> list:
-    result = {}
+    """Returns a dict with the clusters as values and the cluster number as key"""
+    result = {} 
     for i in range(len(cluster_df.cluster.unique())):
-        result[i] = cluster_df.loc[cluster_df['cluster'] == i]
+        result[i] = cluster_df.loc[cluster_df['cluster'] == i]\
+            .drop(columns = ['cluster'], axis=1)
     return result
 
 

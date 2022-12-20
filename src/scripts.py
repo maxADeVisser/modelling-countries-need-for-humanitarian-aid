@@ -59,7 +59,17 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     return s, c, d
 
 def display_clusters(df):
-    """Display the clusters on a map"""
+    """Display the clusters in a pivot table.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe with the clusters
+    
+    Returns
+    -------
+    Pivot table
+    """
     return df.groupby(df['cluster']).mean()
 
 def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, pca_components: int = 9, plot_scree_plot: bool = False):

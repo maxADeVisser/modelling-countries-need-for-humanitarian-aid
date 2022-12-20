@@ -6,6 +6,10 @@ import folium
 from datetime import datetime
 import scipy.cluster.hierarchy as sch
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
 
 def dist(p1: list, p2: list):
     """Calculates the Euclidean distance between 
@@ -62,14 +66,48 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     
     #return cluster_centroid_distances # np.sum(intra_variances)
 
+def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, pca_components: int = 9, plot_scree_plot: bool = False):
+    """Make into a function that can be imported and perform all pre-processing steps
+    on the data. This includes scaling, PCA, etc.
+    
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data to be pre-processed
+    scaler : str, optional
+        The scaler to be used, by default 'standard'
+    pca : bool, optional
+        Whether or not to perform PCA, by default False
+    pca_components : int, optional
+        The number of components to use for PCA, by default len(data.columns)
+    plot_scree_plot : bool, optional
+        Whether or not to plot the scree plot, by default False
+    """
+    if scaler == 'standard':
+        scaler = StandardScaler()
+    elif scaler == 'minmax':
+        scaler = MinMaxScaler()
+    data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
+    if pca:
+        pca = PCA(pca_components)
+        data = pca.fit_transform(data)
+        data = pd.DataFrame(data, columns=[f'PC{i}' for i in range(1, pca_components+1)])
+    if plot_scree_plot and pca:
+        scree = list(pca.explained_variance_ratio_*100) # get variance ratios
+        labels = ['PC' + str(x) for x in range(1, len(scree)+1)] # make labels for scree plot
+        labels = [scree[i] for i in range(len(scree))]
+        for i in range(1, len(scree)):
+            labels[i] = labels[i] + labels[i-1]
+        labels = [round(i, 2) for i in labels]
 
-def pre_process_data(data: pd.DataFrame):
-    """Make into a function that can be imported and perform all pre-processing steps"""
-    # TODO make this
-    
-    # scaling
-    
-    pass
+        # plot the percentage of explained variance by principal component
+        plt.bar(x=range(1,len(scree)+1), height=scree, tick_label = labels) 
+        plt.ylabel('Percentage of Explained Variance')
+        plt.xlabel('Principal Component aggregated variance')
+        plt.title(f'PCA Scree Plot using {str(scaler)[:-2]}')
+        plt.show()
+    return data
+
 
 
 def create_map_plot(data: pd.DataFrame, output_dir: str):

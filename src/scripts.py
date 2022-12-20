@@ -6,7 +6,7 @@ import folium
 from datetime import datetime
 import scipy.cluster.hierarchy as sch
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
@@ -77,6 +77,7 @@ def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, 
         The data to be pre-processed
     scaler : str, optional
         The scaler to be used, by default 'standard'
+        alternatives: {'minmax', 'robust', 'normalizer', 'quantile', 'power', 'maxabs', 'function'}
     pca : bool, optional
         Whether or not to perform PCA, by default False
     pca_components : int, optional
@@ -96,6 +97,18 @@ def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, 
         scaler = StandardScaler()
     elif scaler == 'minmax':
         scaler = MinMaxScaler()
+    elif scaler == 'robust':
+        scaler = RobustScaler()
+    elif scaler == 'normalizer':
+        scaler = Normalizer()
+    elif scaler == 'quantile':
+        scaler = QuantileTransformer()
+    elif scaler == 'power':
+        scaler = PowerTransformer()
+    elif scaler == 'maxabs':
+        scaler = MaxAbsScaler()
+    elif scaler == 'function':
+        scaler = FunctionTransformer()
     data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
     if pca:
         pca = PCA(pca_components)

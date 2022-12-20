@@ -4,6 +4,8 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bo
 import geopandas
 import folium
 from datetime import datetime
+import scipy.cluster.hierarchy as sch
+from sklearn.cluster import AgglomerativeClustering
 
 def dist(p1: list, p2: list):
     """Calculates the Euclidean distance between 
@@ -107,3 +109,16 @@ def create_map_plot(data: pd.DataFrame, output_dir: str):
     choropleth.add_to(urban_area_map)
 
     urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
+
+
+def create_dendrogram(data: pd.DataFrame):
+    return sch.dendrogram(sch.linkage(data, method = 'ward'))
+
+
+def apply_hierarchical_clustering(data: pd.DataFrame, cluster_num: int = 5):
+    """Appends output of hierarchical clustering to provided data in 'cluster' column"""
+    agg_hc = AgglomerativeClustering(n_clusters=cluster_num, affinity='euclidean', linkage='ward')
+    y_hc = agg_hc.fit_predict(data)
+    data["cluster"] = y_hc
+
+    return data

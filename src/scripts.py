@@ -334,8 +334,21 @@ def wcss(cluster: pd.DataFrame) -> float:
 
 def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> float:
     """Iteratively calculate and plot the gap statistic for a given dataset and number of clusters provided.
-        Pandas dataframe provided most only contain numerical values.        
-        """
+        Pandas dataframe provided most only contain numerical values.     
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The data to be clustered
+    n_clusters : int
+        The number of clusters to be used
+    plot_gap : bool, optional
+        Whether to plot the gap statistic, by default True
+    
+    Returns
+    -------
+    float
+        The optimal number of clusters"""
 
     df = np.array(df.values.tolist())  # Convert the dataframe to a numpy array
     gaps = []
@@ -376,5 +389,3 @@ def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> f
         plt.xlabel("Number of Clusters, k")
 
     return gaps
-
-##test

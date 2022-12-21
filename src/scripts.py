@@ -134,6 +134,7 @@ def pre_process_data(
         scaler = MaxAbsScaler()
     elif scaler == 'function':
         scaler = FunctionTransformer()
+        
     data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
     if pca:
         pca = PCA(pca_components)
@@ -142,7 +143,7 @@ def pre_process_data(
             data, columns=[
                 f'PC{i}' for i in range(
                     1, pca_components + 1)])
-    if plot_scree_plot and pca:
+    if (plot_scree_plot and pca):
         scree = list(
             pca.explained_variance_ratio_ *
             100)  # get variance ratios

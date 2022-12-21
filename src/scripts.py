@@ -11,22 +11,54 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
 
-def dist(p1: list, p2: list):
-    """Calculates the Euclidean distance between
-    two points in n-dimensional space"""
+def dist(p1: list, p2: list) -> float:
+    """Calculates the Euclidean distance between two points in n-dimensional space (n = len(p1) = len(p2)).
+    
+
+    Parameters
+    ----------
+    p1 : list
+        The first point
+    p2 : list
+        The second point
+    
+    Returns
+    -------
+    float
+        The Euclidean distance between the two points"""
     return np.sqrt(np.sum([(p1[i] - p2[i])**2 for i in range(len(p1))]))
 
 
 def calculate_centroid(cluster_df: pd.DataFrame) -> list:
-    """Return the centroid of a cluster as a list"""
+    """Return the centroid of a cluster as a list of the mean of each feature. 
+    
+    Parameters
+    ----------
+    cluster_df : pd.DataFrame
+        The cluster to calculate the centroid of
+    
+    Returns
+    -------
+    list
+        The centroid of the cluster"""
     return cluster_df.describe().loc['mean']
 
 
 def ICV(cluster: pd.DataFrame) -> float:
     """Calculate the Intra-Cluster-Variance (ICV) of the provided cluster.
     This is calculated as the mean of the distances of each data point in a cluster,
-    to every other data point in the same cluster."""
-
+    to every other data point in the same cluster.
+    
+    Parameters
+    ----------
+    cluster : pd.DataFrame
+        The cluster to calculate the ICV of
+        
+    Returns
+    -------
+    float
+        The ICV of the cluster"""
+    
     average_distances = []
 
     for sample in cluster.values.tolist():
@@ -41,9 +73,19 @@ def ICV(cluster: pd.DataFrame) -> float:
     return average_distances
 
 
-def split_in_clusters(cluster_df: pd.DataFrame) -> list:
-    """Returns a dict with the clusters as values and the cluster number as key"""
-    result = {}
+def split_in_clusters(cluster_df: pd.DataFrame) -> dict:
+    """Returns a dict with the clusters as values and the cluster number as key
+    
+    Parameters
+    ----------
+    cluster_df : pd.DataFrame
+        The dataframe with the clusters
+        
+    Returns
+    -------
+    result : dict
+        The clusters as values and the cluster number as key"""
+    result = {} 
     for i in range(len(cluster_df.cluster.unique())):
         result[i] = cluster_df.loc[cluster_df['cluster'] == i]\
             .drop(columns=['cluster'], axis=1)
@@ -52,7 +94,22 @@ def split_in_clusters(cluster_df: pd.DataFrame) -> list:
 
 def evalutate_clusters(clustered_df: pd.DataFrame):
     """Calculate the silhouette score, Calinski-Harabasz Index, Davies-Bouldin Index of a clustered dataframe (in that order).
-    The dataframe needs to have a 'cluster' column, and the rest of the columns are the features."""
+    The dataframe needs to have a 'cluster' column, and the rest of the columns are the features.
+    
+    Parameters
+    ----------
+    clustered_df : pd.DataFrame
+        The dataframe with the clusters
+    
+    Returns
+    -------
+    s : float
+        The silhouette score
+    c : float
+        The Calinski-Harabasz Index
+    d : float
+        The Davies-Bouldin Index
+    """
     s = silhouette_score(
         clustered_df.drop(
             columns=['cluster'],
@@ -71,19 +128,19 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     return s, c, d
 
 
-def display_clusters(df):
+def display_clusters(data : pd.DataFrame) -> pd.DataFrame:
     """Display the clusters in a pivot table.
 
     Parameters
     ----------
-    df : pd.DataFrame
+    data : pd.DataFrame
         The dataframe with the clusters
 
     Returns
     -------
-    Pivot table
-    """
-    return df.groupby(df['cluster']).mean()
+    pd.DataFrame
+        The pivot table"""
+    return data.groupby(data['cluster']).mean()
 
 
 def pre_process_data(
@@ -167,11 +224,22 @@ def pre_process_data(
     return countries, data
 
 
-def create_map_plot(data: pd.DataFrame, output_dir: str):
+
+def create_map_plot(data: pd.DataFrame, output_dir: str) -> None:
     """
-    data DataFrame needs following columns:
-        cluster: id of cluster for each row
-        name: country
+    Create a map plot of the clusters. 
+    The data should be a pandas dataframe with the country names as index and the cluster as column.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data to be plotted
+    output_dir : str
+        The directory to save the plot to
+    
+    Returns
+    -------
+    None
     """
 
     country_geopandas = geopandas.read_file(
@@ -206,17 +274,36 @@ def create_map_plot(data: pd.DataFrame, output_dir: str):
     urban_area_map.save(
         f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
 
+def create_dendrogram(data: pd.DataFrame) -> sch.dendrogram:
+    """Creates a dendrogram of the hierarchical clustering
+    
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data to be clustered
+    
+    Returns
+    -------
+    dendrogram
+        The dendrogram"""
+    return sch.dendrogram(sch.linkage(data, method = 'ward'))
 
-def create_dendrogram(data: pd.DataFrame):
-    return sch.dendrogram(sch.linkage(data, method='ward'))
 
-
-def apply_hierarchical_clustering(data: pd.DataFrame, cluster_num: int = 5):
-    """Appends output of hierarchical clustering to provided data in 'cluster' column"""
-    agg_hc = AgglomerativeClustering(
-        n_clusters=cluster_num,
-        affinity='euclidean',
-        linkage='ward')
+def apply_hierarchical_clustering(data: pd.DataFrame, cluster_num: int = 5) -> pd.DataFrame:
+    """Appends output of hierarchical clustering to provided data in 'cluster' column
+    
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data to be clustered
+    cluster_num : int, optional
+        The number of clusters to be used, by default 5
+        
+    Returns
+    -------
+    pd.DataFrame
+        The data with the cluster column appended"""
+    agg_hc = AgglomerativeClustering(n_clusters=cluster_num, affinity='euclidean', linkage='ward')
     y_hc = agg_hc.fit_predict(data)
     data["cluster"] = y_hc
 
@@ -248,7 +335,21 @@ def wcss(cluster: pd.DataFrame) -> float:
 
 def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> float:
     """Iteratively calculate and plot the gap statistic for a given dataset and number of clusters provided.
-      Pandas dataframe provided most only contain numerical values."""
+        Pandas dataframe provided most only contain numerical values.     
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The data to be clustered
+    n_clusters : int
+        The number of clusters to be used
+    plot_gap : bool, optional
+        Whether to plot the gap statistic, by default True
+    
+    Returns
+    -------
+    float
+        The optimal number of clusters"""
 
     df = np.array(df.values.tolist())  # Convert the dataframe to a numpy array
     gaps = []

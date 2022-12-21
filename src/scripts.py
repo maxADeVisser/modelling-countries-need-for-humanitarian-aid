@@ -376,3 +376,5 @@ def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> f
         plt.xlabel("Number of Clusters, k")
 
     return gaps
+
+##test

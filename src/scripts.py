@@ -5,7 +5,7 @@ import geopandas
 import folium
 from datetime import datetime
 import scipy.cluster.hierarchy as sch
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 def dist(p1: list, p2: list) -> float:
     """Calculates the Euclidean distance between two points in n-dimensional space (n = len(p1) = len(p2)).
     
+
     Parameters
     ----------
     p1 : list
@@ -43,7 +44,7 @@ def calculate_centroid(cluster_df: pd.DataFrame) -> list:
     return cluster_df.describe().loc['mean']
 
 
-def ICV(cluster: pd.DataFrame) -> float:  
+def ICV(cluster: pd.DataFrame) -> float:
     """Calculate the Intra-Cluster-Variance (ICV) of the provided cluster.
     This is calculated as the mean of the distances of each data point in a cluster,
     to every other data point in the same cluster.
@@ -59,10 +60,10 @@ def ICV(cluster: pd.DataFrame) -> float:
         The ICV of the cluster"""
     
     average_distances = []
-    
+
     for sample in cluster.values.tolist():
         current = sample
-        
+
         distances_from_current = []
         for point in cluster.values.tolist():
             if current != point:
@@ -87,7 +88,7 @@ def split_in_clusters(cluster_df: pd.DataFrame) -> dict:
     result = {} 
     for i in range(len(cluster_df.cluster.unique())):
         result[i] = cluster_df.loc[cluster_df['cluster'] == i]\
-            .drop(columns = ['cluster'], axis=1)
+            .drop(columns=['cluster'], axis=1)
     return result
 
 
@@ -112,27 +113,51 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     s = silhouette_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
     c = calinski_harabasz_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
     d = davies_bouldin_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
+    The dataframe needs to have a 'cluster' column, and the rest of the columns are the features."""
+    s = silhouette_score(
+        clustered_df.drop(
+            columns=['cluster'],
+            axis=1),
+        clustered_df['cluster'])
+    c = calinski_harabasz_score(
+        clustered_df.drop(
+            columns=['cluster'],
+            axis=1),
+        clustered_df['cluster'])
+    d = davies_bouldin_score(
+        clustered_df.drop(
+            columns=['cluster'],
+            axis=1),
+        clustered_df['cluster'])
     return s, c, d
 
+
+def display_clusters(df):
 def display_clusters(data : pd.DataFrame) -> pd.DataFrame:
     """Display the clusters in a pivot table.
-    
+
     Parameters
     ----------
     data : pd.DataFrame
         The dataframe with the clusters
-    
+
     Returns
     -------
     pd.DataFrame
         The pivot table"""
     return data.groupby(data['cluster']).mean()
 
-def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, pca_components: int = 9, plot_scree_plot: bool = False):
+
+def pre_process_data(
+        data: pd.DataFrame,
+        scaler: str = 'standard',
+        pca=False,
+        pca_components: int = 9,
+        plot_scree_plot: bool = False):
     """Make into a function that can be imported and perform all pre-processing steps
     on the data. This includes scaling, PCA, etc.
 
-    
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -146,7 +171,7 @@ def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, 
         The number of components to use for PCA, by default max number of components
     plot_scree_plot : bool, optional
         Whether or not to plot the scree plot, by default False
-    
+
     Returns
     -------
     countries : pd.Series
@@ -175,17 +200,27 @@ def pre_process_data(data: pd.DataFrame, scaler: str = 'standard', pca = False, 
     if pca:
         pca = PCA(pca_components)
         data = pca.fit_transform(data)
-        data = pd.DataFrame(data, columns=[f'PC{i}' for i in range(1, pca_components+1)])
+        data = pd.DataFrame(
+            data, columns=[
+                f'PC{i}' for i in range(
+                    1, pca_components + 1)])
     if plot_scree_plot and pca:
-        scree = list(pca.explained_variance_ratio_*100) # get variance ratios
-        labels = ['PC' + str(x) for x in range(1, len(scree)+1)] # make labels for scree plot
+        scree = list(
+            pca.explained_variance_ratio_ *
+            100)  # get variance ratios
+        labels = [
+            'PC' +
+            str(x) for x in range(
+                1,
+                len(scree) +
+                1)]  # make labels for scree plot
         labels = [scree[i] for i in range(len(scree))]
         for i in range(1, len(scree)):
-            labels[i] = labels[i] + labels[i-1]
+            labels[i] = labels[i] + labels[i - 1]
         labels = [round(i, 2) for i in labels]
 
         # plot the percentage of explained variance by principal component
-        plt.bar(x=range(1,len(scree)+1), height=scree, tick_label = labels) 
+        plt.bar(x=range(1, len(scree) + 1), height=scree, tick_label=labels)
         plt.ylabel('Percentage of Explained Variance')
         plt.xlabel('Principal Component aggregated variance')
         plt.title(f'PCA Scree Plot using {str(scaler)[:-2]}')
@@ -215,9 +250,9 @@ def create_map_plot(data: pd.DataFrame, output_dir: str) -> None:
         geopandas.datasets.get_path('naturalearth_lowres')
     )
     country_geopandas = country_geopandas.merge(
-        data, # this should be the pandas with statistics at country level
-        how='inner', 
-        left_on=['name'], 
+        data,  # this should be the pandas with statistics at country level
+        how='inner',
+        left_on=['name'],
         right_on=['name']
     )
 
@@ -236,11 +271,12 @@ def create_map_plot(data: pd.DataFrame, output_dir: str) -> None:
     ).add_to(urban_area_map)
     for key in choropleth._children:
         if key.startswith('color_map'):
-            del(choropleth._children[key])
-            
+            del (choropleth._children[key])
+
     choropleth.add_to(urban_area_map)
 
-    urban_area_map.save(f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
+    urban_area_map.save(
+        f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
 
 def create_dendrogram(data: pd.DataFrame) -> sch.dendrogram:
     """Creates a dendrogram of the hierarchical clustering
@@ -276,3 +312,71 @@ def apply_hierarchical_clustering(data: pd.DataFrame, cluster_num: int = 5) -> p
     data["cluster"] = y_hc
 
     return data
+
+
+def wcss(cluster: pd.DataFrame) -> float:
+    """Calculate the Within-Cluster-Sum-of-Squares (WCSS) for a given cluster"""
+    cluster = cluster.values.tolist()
+
+    # Calculate the centroid of the cluster
+    centroid = np.mean(cluster, axis=0)
+
+    # Initialize the WCSS to 0
+    wcss = 0
+
+    # Iterate over each data point in the cluster
+    for point in cluster:
+        # Calculate the squared distance between the data point and the
+        # centroid
+        squared_distance = np.sum((point - centroid)**2)
+        # Add the squared distance to the WCSS
+        wcss += squared_distance
+
+    # WCSS is the sum of the squared distances for all the data points in the
+    # cluster
+    return wcss
+
+
+def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> float:
+    """Iteratively calculate and plot the gap statistic for a given dataset and number of clusters provided.
+      Pandas dataframe provided most only contain numerical values."""
+
+    df = np.array(df.values.tolist())  # Convert the dataframe to a numpy array
+    gaps = []
+    ks = np.arange(2, n_clusters)
+
+    for k in ks:
+        # Use KMeans to cluster the data into n_clusters clusters
+        kmeans = KMeans(n_clusters=k)
+        kmeans.fit(df)
+
+        # Calculate the WCSS of the clusters
+        wcss = kmeans.inertia_
+
+        # Generate a reference distribution of the data by randomly assigning
+        # the data points to clusters
+        reference_distribution = np.random.randint(
+            low=0, high=k - 1, size=df.shape[0])
+
+        # Calculate the WCSS for the reference distribution
+        reference_wcss = 0
+        for i in range(k):
+            cluster = df[reference_distribution == i]
+            centroid = np.mean(cluster, axis=0)
+            for point in cluster:
+                squared_distance = np.sum((point - centroid)**2)
+                reference_wcss += squared_distance
+
+        # Calculate the gap statistic as the difference between the WCSS of the
+        # clusters and the WCSS of the reference distribution, normalized by
+        # the WCSS of the reference distribution
+        gap = (wcss - reference_wcss) / reference_wcss
+        gaps.append(gap)
+
+    if plot_gap:
+        plt.plot(ks, gaps)
+        plt.grid()
+        plt.ylabel("Gap Statistic")
+        plt.xlabel("Number of Clusters, k")
+
+    return gaps

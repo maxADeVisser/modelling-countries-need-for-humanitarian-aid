@@ -110,10 +110,6 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     d : float
         The Davies-Bouldin Index
     """
-    s = silhouette_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
-    c = calinski_harabasz_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
-    d = davies_bouldin_score(clustered_df.drop(columns=['cluster'], axis=1), clustered_df['cluster'])
-    The dataframe needs to have a 'cluster' column, and the rest of the columns are the features."""
     s = silhouette_score(
         clustered_df.drop(
             columns=['cluster'],
@@ -132,7 +128,6 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     return s, c, d
 
 
-def display_clusters(df):
 def display_clusters(data : pd.DataFrame) -> pd.DataFrame:
     """Display the clusters in a pivot table.
 
@@ -339,7 +334,8 @@ def wcss(cluster: pd.DataFrame) -> float:
 
 def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> float:
     """Iteratively calculate and plot the gap statistic for a given dataset and number of clusters provided.
-      Pandas dataframe provided most only contain numerical values."""
+        Pandas dataframe provided most only contain numerical values.        
+        """
 
     df = np.array(df.values.tolist())  # Convert the dataframe to a numpy array
     gaps = []

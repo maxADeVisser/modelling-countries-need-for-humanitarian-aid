@@ -1,7 +1,7 @@
 .DS_Store
 
 # Max additions
-max_notebook.ipynb
+max_kmeans.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -74,6 +74,23 @@ def ICV(cluster: pd.DataFrame) -> float:
     return average_distances
 
 def scatter_plot_data(df: pd.DataFrame, columns: list[str], hover_name: list[str], three: bool = False):
+    """Plot the data in a scatter plot. If three is True, a 3D scatter plot is plotted.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe to plot
+    columns : list[str]
+        The columns to plot
+    hover_name : list[str]
+        The columns to show in the hover
+    three : bool, optional
+        Whether to plot a 3D scatter plot, by default False
+        
+    Returns
+    -------
+    None
+        The plot is shown"""
     if three:
         fig = px.scatter_3d(df, x=columns[0], y=columns[1], z=columns[2], color='cluster', hover_name=hover_name)
         fig.show()

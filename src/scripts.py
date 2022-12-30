@@ -78,7 +78,13 @@ def scatter_plot_data(df: pd.DataFrame, columns: list[str], hover_name: list[str
         fig = px.scatter_3d(df, x=columns[0], y=columns[1], z=columns[2], color='cluster', hover_name=hover_name)
         fig.show()
     else:
-        fig = px.scatter(df, x=columns[0], y=columns[1], color='cluster', hover_name=hover_name)
+        fig = px.scatter(df, 
+                         x=columns[0], 
+                         y=columns[1], 
+                         color='cluster', 
+                         hover_name=hover_name,
+                         width=600,
+                         height=500)
         fig.show()
     
 

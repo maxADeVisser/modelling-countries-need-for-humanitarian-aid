@@ -9,6 +9,7 @@ from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+import plotly_express as px
 
 
 def dist(p1: list, p2: list) -> float:
@@ -72,6 +73,14 @@ def ICV(cluster: pd.DataFrame) -> float:
 
     return average_distances
 
+def scatter_plot_data(df: pd.DataFrame, columns: list[str], hover_name: list[str], three: bool = False):
+    if three:
+        fig = px.scatter_3d(df, x=columns[0], y=columns[1], z=columns[2], color='cluster', hover_name=hover_name)
+        fig.show()
+    else:
+        fig = px.scatter(df, x=columns[0], y=columns[1], color='cluster', hover_name=hover_name)
+        fig.show()
+    
 
 def split_in_clusters(cluster_df: pd.DataFrame) -> dict:
     """Returns a dict with the clusters as values and the cluster number as key
@@ -174,7 +183,9 @@ def pre_process_data(
     data : pd.DataFrame
         The pre-processed data
     """
-    countries = data.pop('country')
+    countries = data['country']
+    data = data.drop(columns=['country'], axis=1)
+    
     if scaler == 'standard':
         scaler = StandardScaler()
     elif scaler == 'minmax':
@@ -312,7 +323,7 @@ def apply_hierarchical_clustering(data: pd.DataFrame, cluster_num: int = 5) -> p
 
 def wcss(cluster: pd.DataFrame) -> float:
     """Calculate the Within-Cluster-Sum-of-Squares (WCSS) for a given cluster"""
-    cluster = cluster.values.tolist()
+    cluster = cluster.values.tolist() # convert pd to numpy array
 
     # Calculate the centroid of the cluster
     centroid = np.mean(cluster, axis=0)
@@ -322,14 +333,11 @@ def wcss(cluster: pd.DataFrame) -> float:
 
     # Iterate over each data point in the cluster
     for point in cluster:
-        # Calculate the squared distance between the data point and the
-        # centroid
+        # Calculate the squared distance between the data point and the centroid
         squared_distance = np.sum((point - centroid)**2)
         # Add the squared distance to the WCSS
         wcss += squared_distance
 
-    # WCSS is the sum of the squared distances for all the data points in the
-    # cluster
     return wcss
 
 
@@ -366,7 +374,7 @@ def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> f
         # Generate a reference distribution of the data by randomly assigning
         # the data points to clusters
         reference_distribution = np.random.randint(
-            low=0, high=k - 1, size=df.shape[0])
+            low=2, high=k - 1, size=df.shape[0])
 
         # Calculate the WCSS for the reference distribution
         reference_wcss = 0

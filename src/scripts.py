@@ -9,7 +9,8 @@ from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-import plotly_express as px
+import plotly.express as px
+from typing import Optional
 
 
 def dist(p1: list, p2: list) -> float:
@@ -177,7 +178,7 @@ def display_clusters(data : pd.DataFrame) -> pd.DataFrame:
 
 def pre_process_data(
         data: pd.DataFrame,
-        scaler: str = 'standard',
+        scaler = None,
         pca=False,
         pca_components: int = 9,
         plot_scree_plot: bool = False):
@@ -206,8 +207,11 @@ def pre_process_data(
     data : pd.DataFrame
         The pre-processed data
     """
-    countries = data['country']
-    data = data.drop(columns=['country'], axis=1)
+    countr = 0
+    if 'country' in data.columns:
+        countr = 1
+        countries = data['country']
+        data = data.drop(columns=['country'], axis=1)
     
     if scaler == 'standard':
         scaler = StandardScaler()
@@ -225,8 +229,8 @@ def pre_process_data(
         scaler = MaxAbsScaler()
     elif scaler == 'function':
         scaler = FunctionTransformer()
-        
-    data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
+    if scaler != None:    
+        data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
     if pca:
         pca = PCA(pca_components)
         data = pca.fit_transform(data)
@@ -255,7 +259,10 @@ def pre_process_data(
         plt.xlabel('Principal Component aggregated variance')
         plt.title(f'PCA Scree Plot using {str(scaler)[:-2]}')
         plt.show()
-    return countries, data
+    if countr == 1:
+        return countries, data
+    else:
+        return data
 
 
 

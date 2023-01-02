@@ -11,6 +11,7 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import plotly.express as px
 import matplotlib.ticker as mtick
+from IPython.display import display, HTML
 
 
 def dist(p1: list, p2: list) -> float:
@@ -240,7 +241,7 @@ def pre_process_data(
             data, columns=[
                 f'PC{i}' for i in range(
                     1, pca_components + 1)])
-        print(pd.DataFrame(pca.components_, index=data.columns, columns=features))
+        display(pd.DataFrame(pca.components_, index=data.columns, columns=features))
         
     if (plot_scree_plot and pca):
         explained_variance = list(pca.explained_variance_ratio_ * 100)  # get variance ratios, y

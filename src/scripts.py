@@ -259,6 +259,7 @@ def pre_process_data(
         plt.show()
     
     if (biplot and pca):
+        # source https://stackoverflow.com/questions/50796024/feature-variable-importance-after-a-pca-analysis
         fig, ax = plt.subplots(figsize=(6,5), dpi=100)
         ax.scatter(data['PC1'], data['PC2'], alpha=0.4)
         
@@ -274,7 +275,7 @@ def pre_process_data(
                      head_width=0.02,
                      head_length=0.02)
             ax.text(current_arrow[0]*1.15, current_arrow[1]*1.15, i, color="g", ha = 'center', va = 'center', fontsize=8)
-            
+        plt.grid()
         plt.xlabel('PC1')
         plt.ylabel('PC2')
         
@@ -285,7 +286,7 @@ def pre_process_data(
     else:
         return data
 
-def create_map_plot(data: pd.DataFrame, output_dir: str) -> None:
+def create_map_plot(data: pd.DataFrame) -> None:
     """
     Create a map plot of the clusters. 
     The data should be a pandas dataframe with the country names as index and the cluster as column.
@@ -330,9 +331,9 @@ def create_map_plot(data: pd.DataFrame, output_dir: str) -> None:
             del (choropleth._children[key])
 
     choropleth.add_to(urban_area_map)
-
-    urban_area_map.save(
-        f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
+    return urban_area_map
+    # urban_area_map.save(
+    #     f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
 
 def create_dendrogram(data: pd.DataFrame) -> sch.dendrogram:
     """Creates a dendrogram of the hierarchical clustering

@@ -9,7 +9,8 @@ from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-import plotly_express as px
+import plotly.express as px
+import matplotlib.ticker as mtick
 
 
 def dist(p1: list, p2: list) -> float:
@@ -177,9 +178,9 @@ def display_clusters(data : pd.DataFrame) -> pd.DataFrame:
 
 def pre_process_data(
         data: pd.DataFrame,
-        scaler: str = 'standard',
+        scaler = None,
         pca=False,
-        pca_components: int = 9,
+        pca_components = 9,
         plot_scree_plot: bool = False):
     """Make into a function that can be imported and perform all pre-processing steps
     on the data. This includes scaling, PCA, etc.
@@ -206,8 +207,12 @@ def pre_process_data(
     data : pd.DataFrame
         The pre-processed data
     """
-    countries = data['country']
-    data = data.drop(columns=['country'], axis=1)
+    
+    countr = 0
+    if 'country' in data.columns:
+        countr = 1
+        countries = data['country']
+        data = data.drop(columns=['country'], axis=1)
     
     if scaler == 'standard':
         scaler = StandardScaler()
@@ -225,39 +230,37 @@ def pre_process_data(
         scaler = MaxAbsScaler()
     elif scaler == 'function':
         scaler = FunctionTransformer()
-        
-    data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
+    if scaler != None:    
+        data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
     if pca:
+        features = data.columns
         pca = PCA(pca_components)
         data = pca.fit_transform(data)
         data = pd.DataFrame(
             data, columns=[
                 f'PC{i}' for i in range(
                     1, pca_components + 1)])
+        print(pd.DataFrame(pca.components_, index=data.columns, columns=features))
+        
     if (plot_scree_plot and pca):
-        scree = list(
-            pca.explained_variance_ratio_ *
-            100)  # get variance ratios
-        labels = [
-            'PC' +
-            str(x) for x in range(
-                1,
-                len(scree) +
-                1)]  # make labels for scree plot
-        labels = [scree[i] for i in range(len(scree))]
-        for i in range(1, len(scree)):
-            labels[i] = labels[i] + labels[i - 1]
-        labels = [round(i, 2) for i in labels]
-
+        explained_variance = list(pca.explained_variance_ratio_ * 100)  # get variance ratios, y
+        percentages = [round(i, 2) for i in explained_variance] 
+        labels = ['PC' + str(x) for x in range(1, len(explained_variance)+1)] # x axis labels
+        
         # plot the percentage of explained variance by principal component
-        plt.bar(x=range(1, len(scree) + 1), height=scree, tick_label=labels)
-        plt.ylabel('Percentage of Explained Variance')
-        plt.xlabel('Principal Component aggregated variance')
-        plt.title(f'PCA Scree Plot using {str(scaler)[:-2]}')
+        fig, ax = plt.subplots(figsize=(6, 5))
+        bars = ax.bar(x=labels, height=percentages, tick_label=labels)
+        ax.bar_label(bars)
+        ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+        
+        plt.ylabel('% of explained variance')
+        plt.xlabel('Principal Components')
         plt.show()
-    return countries, data
-
-
+        
+    if countr == 1:
+        return countries, data
+    else:
+        return data
 
 def create_map_plot(data: pd.DataFrame, output_dir: str) -> None:
     """

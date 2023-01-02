@@ -384,7 +384,7 @@ def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> f
 
     df = np.array(df.values.tolist())  # Convert the dataframe to a numpy array
     gaps = []
-    ks = np.arange(2, n_clusters)
+    ks = np.arange(2, n_clusters + 1)
 
     for k in ks:
         # Use KMeans to cluster the data into n_clusters clusters
@@ -397,7 +397,7 @@ def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> f
         # Generate a reference distribution of the data by randomly assigning
         # the data points to clusters
         reference_distribution = np.random.randint(
-            low=2, high=k - 1, size=df.shape[0])
+            low=1, high=k, size=df.shape[0])
 
         # Calculate the WCSS for the reference distribution
         reference_wcss = 0

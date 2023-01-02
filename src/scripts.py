@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import plotly.express as px
 import matplotlib.ticker as mtick
-from IPython.display import display, HTML
+from IPython.display import display
 
 
 def dist(p1: list, p2: list) -> float:
@@ -182,7 +182,8 @@ def pre_process_data(
         scaler = None,
         pca=False,
         pca_components = 9,
-        plot_scree_plot: bool = False):
+        plot_scree_plot: bool = False,
+        biplot: bool = False):
     """Make into a function that can be imported and perform all pre-processing steps
     on the data. This includes scaling, PCA, etc.
 
@@ -236,12 +237,11 @@ def pre_process_data(
     if pca:
         features = data.columns
         pca = PCA(pca_components)
-        data = pca.fit_transform(data)
-        data = pd.DataFrame(
-            data, columns=[
-                f'PC{i}' for i in range(
-                    1, pca_components + 1)])
-        display(pd.DataFrame(pca.components_, index=data.columns, columns=features))
+        pca_data = pca.fit_transform(data)
+        data = pd.DataFrame(pca_data, 
+                            columns=[f'PC{i}' for i in range(1, pca_components + 1)])
+        
+        pca_explained = pd.DataFrame(pca.components_, index=data.columns, columns=features)
         
     if (plot_scree_plot and pca):
         explained_variance = list(pca.explained_variance_ratio_ * 100)  # get variance ratios, y
@@ -257,8 +257,30 @@ def pre_process_data(
         plt.ylabel('% of explained variance')
         plt.xlabel('Principal Components')
         plt.show()
+    
+    if (biplot and pca):
+        fig, ax = plt.subplots(figsize=(6,5), dpi=100)
+        ax.scatter(data['PC1'], data['PC2'], alpha=0.4)
         
-    if countr == 1:
+        for i in pca_explained:
+            current_arrow = pca_explained[i][:2]
+            ax.arrow(0, 
+                     0, 
+                     current_arrow[0], 
+                     current_arrow[1], 
+                     color = 'r', 
+                     alpha = 0.5, 
+                     length_includes_head=True,
+                     head_width=0.02,
+                     head_length=0.02)
+            ax.text(current_arrow[0]*1.15, current_arrow[1]*1.15, i, color="g", ha = 'center', va = 'center', fontsize=8)
+            
+        plt.xlabel('PC1')
+        plt.ylabel('PC2')
+        
+    if (countr == 1 and pca):
+        return countries, data, pca_explained
+    elif countr == 1:
         return countries, data
     else:
         return data

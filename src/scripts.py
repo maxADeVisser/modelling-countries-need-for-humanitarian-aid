@@ -178,7 +178,8 @@ def display_clusters(clusterd_df : pd.DataFrame, raw_df:pd.DataFrame) -> pd.Data
     pd.DataFrame
         The pivot table of the raw_df with the clusters"""
     raw_df['cluster'] = clusterd_df['cluster'] 
-    return raw_df.groupby(raw_df['cluster']).mean()
+    display(raw_df.groupby(raw_df['cluster']).mean())
+    return raw_df
 
 
 def pre_process_data(
@@ -309,6 +310,23 @@ def create_map_plot(data: pd.DataFrame) -> None:
     -------
     None
     """
+    
+    country_rename = {
+        "Central African Republic" : "Central African Rep.",
+        "Congo, Dem. Rep.": "Dem. Rep. Congo",
+        "Congo, Rep." : "Congo",
+        "Equatorial Guinea": "Eq. Guinea",
+        "Macedonia, FYR": "North Macedonia",
+        "Bosnia and Herzegovina":"Bosnia and Herz.",
+        "Slovak Republic":"Slovakia",
+        "Czech Republic":"Czechia",
+        "Kyrgyz Republic": "Kyrgyzstan",
+        "Cote d'Ivoire":"Côte d'Ivoire",
+        "United States":"United States of America",
+        "Dominican Republic": "Dominican Rep.",
+        "Lao": "Laos",
+    }
+    data['name'] = data['name'].replace(country_rename)
 
     country_geopandas = geopandas.read_file(
         geopandas.datasets.get_path('naturalearth_lowres')

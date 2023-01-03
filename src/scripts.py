@@ -6,6 +6,7 @@ import folium
 from datetime import datetime
 import scipy.cluster.hierarchy as sch
 from sklearn.cluster import AgglomerativeClustering, KMeans, DBSCAN
+from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -16,8 +17,6 @@ from IPython.display import display
 
 def dist(p1: list, p2: list) -> float:
     """Calculates the Euclidean distance between two points in n-dimensional space (n = len(p1) = len(p2)).
-    
-
     Parameters
     ----------
     p1 : list
@@ -125,8 +124,22 @@ def split_in_clusters(cluster_df: pd.DataFrame) -> dict:
             .drop(columns=['cluster'], axis=1)
     return result
 
+def dbscan_epsilon(df: pd.DataFrame, min_samples: int):
 
-def evalutate_clusters(clustered_df: pd.DataFrame):
+    k = min_samples if min_samples > 2 else 2 # use min_samples as a heuristic for k
+
+    nbrs = NearestNeighbors(n_neighbors=k).fit(df) # instanciate NearestNeighbors object
+    distances, indices = nbrs.kneighbors(df)
+    #distances = np.sort(distances, axis=0)[:,1] # sort the distances and keep only the second column
+    furthest = np.sort(distances[:, -1])
+
+    plt.figure(figsize=(5,5))
+    plt.plot(furthest)
+    plt.xlabel('Data points', fontsize=10)
+    plt.ylabel(f'Distance to the {k}th-nearest neighbor', fontsize=10)
+    plt.grid()
+
+def cal_silhouette(clustered_df: pd.DataFrame):
     """Calculate the silhouette score, Calinski-Harabasz Index, Davies-Bouldin Index of a clustered dataframe (in that order).
     The dataframe needs to have a 'cluster' column, and the rest of the columns are the features.
     
@@ -149,20 +162,20 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
             columns=['cluster'],
             axis=1),
         clustered_df['cluster'])
-    c = calinski_harabasz_score(
-        clustered_df.drop(
-            columns=['cluster'],
-            axis=1),
-        clustered_df['cluster'])
-    d = davies_bouldin_score(
-        clustered_df.drop(
-            columns=['cluster'],
-            axis=1),
-        clustered_df['cluster'])
-    return s, c, d
+    # c = calinski_harabasz_score(
+    #     clustered_df.drop(
+    #         columns=['cluster'],
+    #         axis=1),
+    #     clustered_df['cluster'])
+    # d = davies_bouldin_score(
+    #     clustered_df.drop(
+    #         columns=['cluster'],
+    #         axis=1),
+    #     clustered_df['cluster'])
+    return s
 
 
-def display_clusters(clusterd_df : pd.DataFrame, raw_df:pd.DataFrame) -> pd.DataFrame:
+def pivot_table(clusterd_df : pd.DataFrame, raw_df:pd.DataFrame) -> pd.DataFrame:
     """Display the clusters in a pivot table. OBS. clustered_df needs to originate from raw_df.
 
     Parameters
@@ -178,8 +191,9 @@ def display_clusters(clusterd_df : pd.DataFrame, raw_df:pd.DataFrame) -> pd.Data
     pd.DataFrame
         The pivot table of the raw_df with the clusters"""
     raw_df['cluster'] = clusterd_df['cluster'] 
+    pivot_table = raw_df.groupby(raw_df['cluster']).mean()
     display(raw_df.groupby(raw_df['cluster']).mean())
-    return raw_df
+    return raw_df, pivot_table
 
 
 def pre_process_data(
@@ -188,7 +202,9 @@ def pre_process_data(
         pca=False,
         pca_components = 9,
         plot_scree_plot: bool = False,
-        biplot: bool = False):
+        biplot: bool = False,
+        plot_pc: tuple[str, str] = None,
+        ):
     """Make into a function that can be imported and perform all pre-processing steps
     on the data. This includes scaling, PCA, etc.
 
@@ -257,7 +273,7 @@ def pre_process_data(
         labels = ['PC' + str(x) for x in range(1, len(explained_variance)+1)] # x axis labels
         
         # plot the percentage of explained variance by principal component
-        fig, ax = plt.subplots(figsize=(6, 5))
+        fig, ax = plt.subplots(figsize=(5, 4))
         bars = ax.bar(x=labels, height=percentages, tick_label=labels)
         ax.bar_label(bars)
         ax.yaxis.set_major_formatter(mtick.PercentFormatter())
@@ -268,8 +284,8 @@ def pre_process_data(
     
     if (biplot and pca):
         # source https://stackoverflow.com/questions/50796024/feature-variable-importance-after-a-pca-analysis
-        fig, ax = plt.subplots(figsize=(6,5), dpi=100)
-        ax.scatter(data['PC1'], data['PC2'], alpha=0.4)
+        fig, ax = plt.subplots(figsize=(7,6), dpi=100)
+        ax.scatter(data[plot_pc[0]], data[plot_pc[1]], alpha=0.4)
         
         for i in pca_explained:
             current_arrow = pca_explained[i][:2]
@@ -284,8 +300,8 @@ def pre_process_data(
                      head_length=0.02)
             ax.text(current_arrow[0]*1.15, current_arrow[1]*1.15, i, color="g", ha = 'center', va = 'center', fontsize=8)
         plt.grid()
-        plt.xlabel('PC1')
-        plt.ylabel('PC2')
+        plt.xlabel(plot_pc[0])
+        plt.ylabel(plot_pc[1])
         
     if (countr == 1 and pca):
         return countries, data, pca_explained
@@ -294,7 +310,7 @@ def pre_process_data(
     else:
         return data
 
-def create_map_plot(data: pd.DataFrame) -> None:
+def create_map_plot(data: pd.DataFrame, out_dir: str = None) -> None:
     """
     Create a map plot of the clusters. 
     The data should be a pandas dataframe with the country names as index and the cluster as column.
@@ -326,16 +342,16 @@ def create_map_plot(data: pd.DataFrame) -> None:
         "Dominican Republic": "Dominican Rep.",
         "Lao": "Laos",
     }
-    data['name'] = data['name'].replace(country_rename)
+    data['country'] = data['country'].replace(country_rename)
 
     country_geopandas = geopandas.read_file(
         geopandas.datasets.get_path('naturalearth_lowres')
-    )
+    ).rename(columns={'name': 'country'})
     country_geopandas = country_geopandas.merge(
         data,  # this should be the pandas with statistics at country level
         how='inner',
-        left_on=['name'],
-        right_on=['name']
+        left_on=['country'],
+        right_on=['country']
     )
 
     urban_area_map = folium.Map()
@@ -343,8 +359,8 @@ def create_map_plot(data: pd.DataFrame) -> None:
         geo_data=country_geopandas,
         name='choropleth',
         data=country_geopandas,
-        columns=['name', 'cluster'],
-        key_on='feature.properties.name',
+        columns=['country', 'cluster'],
+        key_on='feature.properties.country',
         fill_color='Set1',
         nan_fill_color='Grey',
         fill_opacity=0.7,
@@ -356,9 +372,11 @@ def create_map_plot(data: pd.DataFrame) -> None:
             del (choropleth._children[key])
 
     choropleth.add_to(urban_area_map)
-    return urban_area_map
-    # urban_area_map.save(
-    #     f'{output_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
+    if out_dir:
+        urban_area_map.save(f'{out_dir}/graph_{datetime.now().strftime("%Y-%m-%d-time-%H-%M-%S")}.html')
+    else:
+        return urban_area_map
+    
 
 def create_dendrogram(data: pd.DataFrame) -> sch.dendrogram:
     """Creates a dendrogram of the hierarchical clustering

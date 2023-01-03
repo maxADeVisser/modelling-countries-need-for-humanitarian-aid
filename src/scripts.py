@@ -5,7 +5,7 @@ import geopandas
 import folium
 from datetime import datetime
 import scipy.cluster.hierarchy as sch
-from sklearn.cluster import AgglomerativeClustering, KMeans
+from sklearn.cluster import AgglomerativeClustering, KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Normalizer, QuantileTransformer, PowerTransformer, MaxAbsScaler, FunctionTransformer
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -389,6 +389,14 @@ def wcss(cluster: pd.DataFrame) -> float:
         wcss += squared_distance
 
     return wcss
+
+def apply_dbscan(df: pd.DataFrame(), eps, min_samples) -> pd.DataFrame:
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+    dbscan.fit(df.drop("country", axis=1))
+    
+    clusters = dbscan.labels_
+    df["cluster"] = clusters
+    return dbscan.components_, df
 
 
 def gap_statistic(df: pd.DataFrame, n_clusters: int, plot_gap: bool = True) -> float:

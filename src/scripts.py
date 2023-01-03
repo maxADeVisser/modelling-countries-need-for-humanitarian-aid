@@ -193,21 +193,24 @@ def pre_process_data(
     data : pd.DataFrame
         The data to be pre-processed
     scaler : str, optional
-        The scaler to be used, by default 'standard'
-        alternatives: {'minmax', 'robust', 'normalizer', 'quantile', 'power', 'maxabs', 'function'}
+        The scaler to use, by default None.
+        Alternatives: {'standard','minmax', 'robust', 'normalizer', 'quantile', 'power', 'maxabs', 'function'}
     pca : bool, optional
         Whether or not to perform PCA, by default False
     pca_components : int, optional
-        The number of components to use for PCA, by default max number of components
+        The number of components to use for PCA, by default 9
     plot_scree_plot : bool, optional
         Whether or not to plot the scree plot, by default False
-
+    biplot : bool, optional
+        Whether or not to plot the biplot, by default False
     Returns
     -------
     countries : pd.Series
         The countries of the data
     data : pd.DataFrame
         The pre-processed data
+    pca_components : pd.DataFrame
+        The PCA components if pca is True
     """
     
     countr = 0

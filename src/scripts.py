@@ -394,6 +394,7 @@ def wcss(cluster: pd.DataFrame) -> float:
     return wcss
 
 def apply_dbscan(df: pd.DataFrame(), eps, min_samples) -> pd.DataFrame:
+    """Apply DBSCAN to the provided data and return the components and the data with the cluster column appended"""
     dbscan = DBSCAN(eps=eps, min_samples=min_samples)
     dbscan.fit(df.drop("country", axis=1))
     

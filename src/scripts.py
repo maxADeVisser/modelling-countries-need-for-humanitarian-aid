@@ -162,19 +162,23 @@ def evalutate_clusters(clustered_df: pd.DataFrame):
     return s, c, d
 
 
-def display_clusters(data : pd.DataFrame) -> pd.DataFrame:
-    """Display the clusters in a pivot table.
+def display_clusters(clusterd_df : pd.DataFrame, raw_df:pd.DataFrame) -> pd.DataFrame:
+    """Display the clusters in a pivot table. OBS. clustered_df needs to originate from raw_df.
 
     Parameters
     ----------
+    clusterd_df : pd.DataFrame
+        The dataframe with the clusters
+    
     data : pd.DataFrame
         The dataframe with the clusters
 
     Returns
     -------
     pd.DataFrame
-        The pivot table"""
-    return data.groupby(data['cluster']).mean()
+        The pivot table of the raw_df with the clusters"""
+    raw_df['cluster'] = clusterd_df['cluster'] 
+    return raw_df.groupby(raw_df['cluster']).mean()
 
 
 def pre_process_data(

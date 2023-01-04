@@ -192,7 +192,6 @@ def pivot_table(clusterd_df : pd.DataFrame, raw_df:pd.DataFrame) -> pd.DataFrame
         The pivot table of the raw_df with the clusters"""
     raw_df['cluster'] = clusterd_df['cluster'] 
     pivot_table = raw_df.groupby(raw_df['cluster']).mean()
-    display(raw_df.groupby(raw_df['cluster']).mean())
     return raw_df, pivot_table
 
 

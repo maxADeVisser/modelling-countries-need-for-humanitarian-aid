@@ -284,7 +284,7 @@ def pre_process_data(
     if (biplot and pca):
         # source https://stackoverflow.com/questions/50796024/feature-variable-importance-after-a-pca-analysis
         fig, ax = plt.subplots(figsize=(7,6), dpi=100)
-        ax.scatter(data[plot_pc[0]], data[plot_pc[1]], alpha=0.4)
+        ax.scatter(data['PC1'], data['PC2'], alpha=0.4)
         
         for i in pca_explained:
             current_arrow = pca_explained[i][:2]
@@ -299,8 +299,9 @@ def pre_process_data(
                      head_length=0.02)
             ax.text(current_arrow[0]*1.15, current_arrow[1]*1.15, i, color="g", ha = 'center', va = 'center', fontsize=8)
         plt.grid()
-        plt.xlabel(plot_pc[0])
-        plt.ylabel(plot_pc[1])
+        plt.xlabel('PC1')
+        plt.ylabel('PC2')
+        fig.show()
         
     if (countr == 1 and pca):
         return countries, data, pca_explained
